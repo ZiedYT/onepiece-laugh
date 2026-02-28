@@ -84,7 +84,12 @@ function getNextCharacter() {
 
 function loadNewCharacter() {
     if (state.currentAudioNode) {
-        state.currentAudioNode.pause();
+        try {
+            state.currentAudioNode.stop();
+            state.currentAudioNode.disconnect();
+        } catch (error) {
+            // Ignore stop errors on already-stopped nodes
+        }
         state.currentAudioNode = null;
     }
     if (state.currentAudioUrl) {
@@ -131,25 +136,19 @@ function loadAudio() {
     for (let i = 0; i < binaryString.length; i++) {
         bytes[i] = binaryString.charCodeAt(i);
     }
-    
-    const blob = new Blob([bytes], { type: 'audio/mpeg' });
-    const url = URL.createObjectURL(blob);
-    state.currentAudioUrl = url;
-    
-    const audio = new Audio();
-    audio.src = url;
-    
-    audio.oncanplay = () => {
+
+    const arrayBuffer = bytes.buffer.slice(0);
+
+    initAudioContext();
+    audioContext.decodeAudioData(arrayBuffer).then(decoded => {
         state.audioBuffer = {
-            duration: audio.duration,
-            element: audio
+            duration: decoded.duration,
+            buffer: decoded
         };
         updateAudioTimeline();
-    };
-
-    audio.onerror = () => {
-        console.error('Error playing audio:', laughFileName);
-    };
+    }).catch(err => {
+        console.error('Error decoding audio:', laughFileName, err);
+    });
 }
 
 function setupAudio() {
@@ -230,26 +229,55 @@ function playAudio() {
 
     // Stop any currently playing audio
     if (state.currentAudioNode) {
-        state.currentAudioNode.pause();
+        try {
+            state.currentAudioNode.stop();
+            state.currentAudioNode.disconnect();
+        } catch (error) {
+            // Ignore stop errors on already-stopped nodes
+        }
     }
 
     const isMaxReveal = isAtMaxReveal();
-    const revealDuration = isMaxReveal ? state.audioBuffer.duration : getCurrentRevealDuration();
+    const requestedDuration = isMaxReveal ? state.audioBuffer.duration : getCurrentRevealDuration();
+    const revealDuration = Math.min(requestedDuration, state.audioBuffer.duration);
     state.isPlaying = true;
     document.getElementById('playBtn').disabled = true;
 
-    const audio = state.audioBuffer.element;
-    audio.currentTime = 0;
-    state.currentAudioNode = audio;
+    initAudioContext();
+    audioContext.resume();
+
+    const originalBuffer = state.audioBuffer.buffer;
+    const paddedBuffer = audioContext.createBuffer(
+        originalBuffer.numberOfChannels,
+        originalBuffer.length,
+        originalBuffer.sampleRate
+    );
+
+    const revealSamples = Math.floor(revealDuration * originalBuffer.sampleRate);
+    for (let ch = 0; ch < originalBuffer.numberOfChannels; ch++) {
+        const origData = originalBuffer.getChannelData(ch);
+        const paddedData = paddedBuffer.getChannelData(ch);
+        paddedData.set(origData.subarray(0, revealSamples));
+    }
+
+    const source = audioContext.createBufferSource();
+    source.buffer = paddedBuffer;
+    source.connect(audioContext.destination);
+    state.currentAudioNode = source;
     
     let rafId = null;
-    const startTime = performance.now();
+    const startTime = audioContext.currentTime;
     
     const checkTime = (currentTime) => {
-        const elapsed = (currentTime - startTime) / 1000;
+        const elapsed = audioContext.currentTime - startTime;
         
         if (elapsed >= revealDuration) {
-            audio.pause();
+            try {
+                source.stop();
+                source.disconnect();
+            } catch (error) {
+                // Ignore stop errors on already-stopped nodes
+            }
             state.isPlaying = false;
             document.getElementById('playBtn').disabled = false;
             state.currentAudioNode = null;
@@ -259,14 +287,15 @@ function playAudio() {
             rafId = requestAnimationFrame(checkTime);
         }
     };
-    
-    audio.play().catch(err => console.error('Playback error:', err));
+
+    source.start(0);
     rafId = requestAnimationFrame(checkTime);
 }
 
 function updateAudioProgressPlayback(elapsed, revealDuration, totalDuration) {
-    const progressBase = Math.min(revealDuration, totalDuration);
-    const percent = (elapsed / progressBase) * 100;
+    const safeTotal = Math.max(0.001, totalDuration);
+    const maxPercent = (Math.min(revealDuration, safeTotal) / safeTotal) * 100;
+    const percent = Math.min((elapsed / safeTotal) * 100, maxPercent);
     document.getElementById('audioProgress').style.width = percent + '%';
     document.getElementById('currentTime').textContent = elapsed.toFixed(1) + 's';
 }
