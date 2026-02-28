@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>One Piece Laugh Quiz</title>
+    <link rel="stylesheet" href="quiz.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 One Piece Laugh Quiz</h1>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 16px;">Loading...</p>
+        </div>
+
+        <div id="quiz" class="quiz-section" style="display: none;">
+            <!-- Stats -->
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="correctCount">0</div>
+                    <div>Correct</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="totalCount">0</div>
+                    <div>Total</div>
+                </div>
+            </div>
+
+            <!-- Audio Player -->
+            <div class="audio-section">
+                <label class="audio-label">Listen</label>
+                <div class="audio-player">
+                    <button class="play-btn" id="playBtn" title="Play">▶</button>
+                    <div class="audio-timeline" id="audioTimeline">
+                        <div class="audio-progress" id="audioProgress"></div>
+                        <div class="audio-limit" id="audioLimit"></div>
+                    </div>
+                    <div class="current-time" id="currentTime">0.0s</div>
+                </div>
+                <div class="reveal-info">
+                    <div id="nextHintInfo" style="font-size: 13px; color: #666;"></div>
+                </div>
+            </div>
+
+            <div class="hints-row">
+                <div id="hintsContainer" class="hints-container"></div>
+            </div>
+
+            <!-- Search Field -->
+            <div class="search-section">
+                <input 
+                    type="text" 
+                    class="search-input" 
+                    id="searchInput" 
+                    placeholder="Type character name..."
+                    autocomplete="off"
+                >
+                <div class="dropdown" id="dropdown"></div>
+                <button id="giveUpBtn" class="give-up-btn" type="button">Give up</button>
+            </div>
+
+            <div id="feedback" class="feedback"></div>
+            <button id="nextBtn" class="next-btn" type="button">Next laugh</button>
+
+        </div>
+    </div>
+
+    <script src="quiz-data.js"></script>
+    <script src="quiz.js"></script>
+</body>
+</html>
