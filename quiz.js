@@ -30,6 +30,7 @@ let state = {
     mistakes: 0,
     correctAnswers: 0,
     totalAnswers: 0,
+    totalGuesses: 0,
     audioBuffer: null,
     audioSource: null,
     isPlaying: false,
@@ -68,6 +69,7 @@ function initializeQuiz() {
     setupAudio();
     loadNewCharacter();
     updateRevealDots();
+    updateStatsDisplay();
 }
 
 function getNextCharacter() {
@@ -108,7 +110,7 @@ function loadNewCharacter() {
     state.forceFullAudio = false;
     state.awaitingNext = false;
     state.totalAnswers++;
-    document.getElementById('totalCount').textContent = state.totalAnswers;
+    updateStatsDisplay();
     document.getElementById('searchInput').value = '';
     document.getElementById('dropdown').classList.remove('active');
     document.getElementById('feedback').innerHTML = '';
@@ -171,14 +173,18 @@ function handleGiveUp() {
     const char = state.currentCharacter;
     state.forceFullAudio = true;
     
+    // Count total guesses: wrong guesses + 1 for giving up
+    state.totalGuesses += state.wrongGuesses.length + 1;
+    updateStatsDisplay();
+    
     const feedbackContainer = document.getElementById('feedback');
     const giveUpBox = document.createElement('div');
-    giveUpBox.className = 'feedback show incorrect feedback-item';
+    giveUpBox.className = 'feedback show incorrect reveal-card';
     const imageFile = char.laugh.replace('.mp3', '.jpg');
     const imageUrl = `${CONFIG.imageFolder}/${imageFile}`;
     giveUpBox.innerHTML = `
-        <img src="${imageUrl}" alt="" class="feedback-image" onerror="this.style.display='none'">
-        <div class="feedback-text">You gave up! The answer was ${char.championName}.</div>
+        <img src="${imageUrl}" alt="" class="reveal-image" onerror="this.style.display='none'">
+        <div class="reveal-name">${char.championName}</div>
     `;
     feedbackContainer.insertBefore(giveUpBox, feedbackContainer.firstChild);
     
@@ -432,16 +438,18 @@ function selectCharacter(characterName) {
 
     if (selected.championId === state.currentCharacter.championId) {
         state.correctAnswers++;
+        // Count total guesses: wrong guesses + 1 for the correct one
+        state.totalGuesses += state.wrongGuesses.length + 1;
         state.forceFullAudio = true;
-        document.getElementById('correctCount').textContent = state.correctAnswers;
+        updateStatsDisplay();
         const feedbackContainer = document.getElementById('feedback');
         const correctImageFile = selected.laugh.replace('.mp3', '.jpg');
         const correctImageUrl = `${CONFIG.imageFolder}/${correctImageFile}`;
         const correctBox = document.createElement('div');
-        correctBox.className = 'feedback show correct feedback-item';
+        correctBox.className = 'feedback show correct reveal-card';
         correctBox.innerHTML = `
-            <img src="${correctImageUrl}" alt="" class="feedback-image" onerror="this.style.display='none'">
-            <div class="feedback-text">✓ Correct! It's ${characterName}!</div>
+            <img src="${correctImageUrl}" alt="" class="reveal-image" onerror="this.style.display='none'">
+            <div class="reveal-name">${characterName}</div>
         `;
         feedbackContainer.insertBefore(correctBox, feedbackContainer.firstChild);
         document.getElementById('searchInput').disabled = true;
@@ -484,6 +492,16 @@ function selectCharacter(characterName) {
 
     document.getElementById('searchInput').value = '';
     document.getElementById('dropdown').classList.remove('active');
+}
+
+function updateStatsDisplay() {
+    const correctFraction = `${state.correctAnswers}/${state.totalAnswers}`;
+    document.getElementById('correctCount').textContent = correctFraction;
+    
+    const avgGuesses = state.correctAnswers > 0 
+        ? (state.totalGuesses / state.correctAnswers).toFixed(1)
+        : '0.0';
+    document.getElementById('averageGuesses').textContent = avgGuesses;
 }
 
 loadCharacters();

@@ -3,33 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>One Piece Laugh Quiz</title>
+    <title>One Piece Laugh Dle</title>
     <link rel="stylesheet" href="quiz.css">
 </head>
 <body>
     <div class="container">
-        <h1>🎵 One Piece Laugh Quiz</h1>
+        <h1>🏴‍☠️Laugh Dle🏴‍☠️</h1>
 
         <div id="loading" class="loading">
             <div class="spinner"></div>
-            <p style="margin-top: 16px;">Loading...</p>
+            <p style="margin-top: 20px;">Loading...</p>
         </div>
 
         <div id="quiz" class="quiz-section" style="display: none;">
-            <!-- Stats -->
-            <div class="stats">
-                <div class="stat-item">
-                    <div class="stat-value" id="correctCount">0</div>
-                    <div>Correct</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="totalCount">0</div>
-                    <div>Total</div>
-                </div>
-            </div>
-
             <!-- Audio Player -->
             <div class="audio-section">
+                <div class="stat-item stat-correct">
+                    <div class="stat-value" id="correctCount">0/1</div>
+                    <div class="stat-label">correct</div>
+                </div>
+                <div class="stat-item stat-avg">
+                    <div class="stat-value" id="averageGuesses">0.0</div>
+                    <div class="stat-label">Avg Guesses</div>
+                </div>
+                
                 <label class="audio-label">Listen</label>
                 <div class="audio-player">
                     <button class="play-btn" id="playBtn" title="Play">▶</button>
@@ -40,7 +37,7 @@
                     <div class="current-time" id="currentTime">0.0s</div>
                 </div>
                 <div class="reveal-info">
-                    <div id="nextHintInfo" style="font-size: 13px; color: #666;"></div>
+                    <div id="nextHintInfo" style="font-size: 16px; color: #666;"></div>
                 </div>
             </div>
 
