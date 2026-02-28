@@ -39,6 +39,7 @@ let state = {
     wrongGuesses: [],
     forceFullAudio: false,
     awaitingNext: false,
+    revealAllHints: false,
     recentCharacters: []
 };
 
@@ -109,6 +110,7 @@ function loadNewCharacter() {
     state.wrongGuesses = [];
     state.forceFullAudio = false;
     state.awaitingNext = false;
+    state.revealAllHints = false;
     state.totalAnswers++;
     updateStatsDisplay();
     document.getElementById('searchInput').value = '';
@@ -176,6 +178,7 @@ function handleGiveUp() {
     // Count total guesses: wrong guesses + 1 for giving up
     state.totalGuesses += state.wrongGuesses.length + 1;
     updateStatsDisplay();
+    revealAllHints();
     
     const feedbackContainer = document.getElementById('feedback');
     const giveUpBox = document.createElement('div');
@@ -343,7 +346,7 @@ function updateHintDisplay() {
     
     // Display all hint boxes from the start, reveal value when unlocked
     hintItems.forEach(prog => {
-        const isUnlocked = state.mistakes >= prog.mistake;
+        const isUnlocked = state.revealAllHints || state.mistakes >= prog.mistake;
         const value = isUnlocked ? prog.getValue(state.currentCharacter) : '?????';
         
         const hintBox = document.createElement('div');
@@ -356,7 +359,7 @@ function updateHintDisplay() {
     });
     
     // Calculate next hint countdown
-    const nextLockedHint = hintItems.find(p => state.mistakes < p.mistake);
+    const nextLockedHint = state.revealAllHints ? null : hintItems.find(p => state.mistakes < p.mistake);
     if (nextLockedHint) {
         const countdown = nextLockedHint.mistake - state.mistakes;
         
@@ -368,6 +371,11 @@ function updateHintDisplay() {
     } else {
         nextHintInfo.textContent = 'No more hints!';
     }
+}
+
+function revealAllHints() {
+    state.revealAllHints = true;
+    updateHintDisplay();
 }
 
 function onSearchInput(event) {
@@ -442,6 +450,7 @@ function selectCharacter(characterName) {
         state.totalGuesses += state.wrongGuesses.length + 1;
         state.forceFullAudio = true;
         updateStatsDisplay();
+        revealAllHints();
         const feedbackContainer = document.getElementById('feedback');
         const correctImageFile = selected.laugh.replace('.mp3', '.jpg');
         const correctImageUrl = `${CONFIG.imageFolder}/${correctImageFile}`;
