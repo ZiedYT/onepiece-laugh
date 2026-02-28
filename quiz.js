@@ -175,8 +175,7 @@ function handleGiveUp() {
     const char = state.currentCharacter;
     state.forceFullAudio = true;
     
-    // Count total guesses: wrong guesses + 1 for giving up
-    state.totalGuesses += state.wrongGuesses.length + 1;
+    // Skips do not affect average guesses
     updateStatsDisplay();
     revealAllHints();
     
