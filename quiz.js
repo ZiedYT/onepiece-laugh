@@ -6,6 +6,27 @@ const CONFIG = {
 
 const RECENT_LIMIT = 20;
 
+function formatBounty(value) {
+    if (value === null || value === undefined || value === '') {
+        return 'Unknown';
+    }
+    if (typeof value === 'number' && Number.isFinite(value)) {
+        return value.toLocaleString('en-US');
+    }
+    if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (!trimmed) {
+            return 'Unknown';
+        }
+        const normalized = trimmed.replace(/,/g, '');
+        if (/^\d+$/.test(normalized)) {
+            return Number(normalized).toLocaleString('en-US');
+        }
+        return value;
+    }
+    return String(value);
+}
+
 // Central progression config - controls when audio reveals and hints appear
 const PROGRESSION = [
     { mistake: 0, type: 'audio', duration: 0.1 },
@@ -16,7 +37,7 @@ const PROGRESSION = [
     { mistake: 5, type: 'hint', category: 'Episode', getValue: (char) => char.debutEpisode || 'Unknown' },
     { mistake: 6, type: 'hint', category: 'Height', getValue: (char) => (char.height || 'Unknown') + ' cm' },
     { mistake: 7, type: 'hint', category: 'Fruit Type', getValue: (char) => char.devilFruitType || 'None' },
-    { mistake: 8, type: 'hint', category: 'Bounty', getValue: (char) => char.bounty || 'Unknown' },
+    { mistake: 8, type: 'hint', category: 'Bounty', getValue: (char) => formatBounty(char.bounty) },
     { mistake: 9, type: 'hint', category: 'Haki', getValue: (char) => char.haki ? (Array.isArray(char.haki) ? char.haki.join(', ') : char.haki) : 'None' },
     { mistake: 10, type: 'hint', category: 'Affiliation', getValue: (char) => char.affiliation || 'Unknown' },
     { mistake: 11, type: 'hint', category: 'Devil Fruit', getValue: (char) => char.devilFruitName !== 'None' ? char.devilFruitName : 'None' }
@@ -347,12 +368,17 @@ function updateHintDisplay() {
     hintItems.forEach(prog => {
         const isUnlocked = state.revealAllHints || state.mistakes >= prog.mistake;
         const value = isUnlocked ? prog.getValue(state.currentCharacter) : '?????';
+        const valueText = String(value);
+        const normalized = valueText.replace(/,/g, '');
+        const isBounty = prog.category === 'Bounty';
+        const needsCompact = isBounty && /^\d+$/.test(normalized) && normalized.length > 9;
+        const valueClass = needsCompact ? 'hint-value compact' : 'hint-value';
         
         const hintBox = document.createElement('div');
         hintBox.className = 'hint-box';
         hintBox.innerHTML = `
             <div class="hint-label">${prog.category}</div>
-            <div class="hint-value">${value}</div>
+            <div class="${valueClass}">${value}</div>
         `;
         hintsContainer.appendChild(hintBox);
     });

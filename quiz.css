@@ -271,6 +271,11 @@ h1 {
     line-height: 1.25;
 }
 
+.hint-value.compact {
+    font-size: clamp(10px, 1.3vw, 13px);
+    line-height: 1.15;
+}
+
 /* Search Field */
 .search-section {
     position: relative;
